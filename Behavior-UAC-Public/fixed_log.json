@@ -12,7 +12,7 @@
         "scripts/example/commands/staff/"
     ],
     "fixing_files_in_progress": [
-        "scripts/modules/hotbar_message/setworldspawn.js"
+        "scripts/modules/hotbar_message.js"
     ],
     "deleted_files": [
         {
