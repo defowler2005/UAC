@@ -1,0 +1,28 @@
+{
+    "game_version": [
+        1,
+        21,
+        0
+    ],
+    "fixed_files": [
+        "manifest.json",
+        "scripts/library/build/classes/databaseBuilder.js",
+        "scripts/example/commands/staff/gui.js",
+        "scripts/example/index.js",
+        "scripts/example/commands/staff/"
+    ],
+    "fixing_files_in_progress": [
+        "scripts/modules/hotbar_message/setworldspawn.js"
+    ],
+    "deleted_files": [
+        {
+            "animation_controllers/on_join.json": {},
+            "reason": "This animation controller has no function to the game"
+        }
+    ],
+    "notes": [
+        "icm check; if (Database.get('icmtoggledummy') !== 1 && !sender.hasTag('staffstatus')) return sender.tellraw(`§¶§cUAC ► §c§lThe Realm Owner currently has Player Commands Disabled`);",
+        "fixed_files[1] Modified to use dynamic properties",
+        "Make JS interpreter for scoreboard to Dynamic properties"
+    ]
+}

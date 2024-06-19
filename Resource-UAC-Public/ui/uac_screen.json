@@ -1,0 +1,37 @@
+{
+    "namespace": "uac",
+    /*
+    --------------------------------------------------------------------------------
+    Pack Info
+    --------------------------------------------------------------------------------
+    */
+    "pack_info": {
+        "type": "label",
+        "text": "§¶§c§lUAC ► §bUnity Anti-Cheat",
+        "color": [
+            1.0,
+            1.0,
+            1.0
+        ],
+        "shadow": true,
+        "font_size": "medium",
+        "visible": "$pack_info_debug",
+        "anchor_from": "bottom_right",
+        "anchor_to": "bottom_right",
+        "alpha": 11
+    },
+    "uac:hud_title_image": {
+        "type": "image",
+        "texture": "textures/sidebar_logo/logo.png",
+        "anchor_from": "right_middle",
+        "anchor_to": "right_middle",
+        "size": [
+            70,
+            70
+        ],
+        "offset": [
+            -10,
+            -90
+        ]
+    }
+}
