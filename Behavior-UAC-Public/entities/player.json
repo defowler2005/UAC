@@ -42,7 +42,6 @@
 				"home_y_positive": "controller.animation.home_y_positive",
 				"home_z_positive": "controller.animation.home_z_positive",
 				"home_teleport_reset": "controller.animation.home_teleport_reset",
-				"spawn_points": "controller.animation.spawn_points",
 				"enchanted_helmet": "controller.animation.enchanted_helmet",
 				"enchanted_chestplate": "controller.animation.enchanted_chestplate",
 				"enchanted_leggings": "controller.animation.enchanted_leggings",
