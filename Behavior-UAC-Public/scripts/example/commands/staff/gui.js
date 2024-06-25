@@ -52,7 +52,7 @@ const moduleDefs_prots = [
     {
         mname: 'Unobtainable Items',
         obj: ['UOIM'],
-        name: 'uoimtoggledummy',
+        name: 'uoimtoggle',
         toggle: ['§cOFF', '§aON'],
         require: 'has_xx'
     },
@@ -75,8 +75,8 @@ const moduleDefs_util = [
     },
     {
         mname: 'Anti CLog',
-        obj: ['clmtoggle', 'clmtoggle'],
-        name: 'clmdummy',
+        obj: ['clmtoggle'],
+        name: 'clmtoggle',
         toggle: ['§cOFF', '§aKILL', '§aCLEAR'],
         require: 'has_xx'
     },
@@ -132,7 +132,7 @@ const moduleDefs_util = [
     {
         mname: 'Player Commands',
         obj: ['ICM', 'icmtoggle'],
-        name: 'icmtoggledummy',
+        name: 'icmtoggle',
         toggle: ['§cOFF', '§aON'],
         require: 'has_gt'
     },
@@ -1057,7 +1057,7 @@ const waitMove = new Map();
 
 Server.command.register(registerInformation, (chatmsg) => {
     const { sender } = chatmsg, { location: { x, y, z } } = sender;
-    if (Database.get('icmtoggledummy') !== 1 && !sender.hasTag('staffstatus')) return sender.tellraw(`§¶§cUAC ► §c§lThe Realm Owner currently has Player Commands Disabled`);
+    if (Database.get('icmtoggle') !== 1 && !sender.hasTag('staffstatus')) return sender.tellraw(`§¶§cUAC ► §c§lThe Realm Owner currently has Player Commands Disabled`);
 
     sender.tellraw(`§aMove to show the UI.`)
     waitMove.set(chatmsg.sender, [x, y, z])

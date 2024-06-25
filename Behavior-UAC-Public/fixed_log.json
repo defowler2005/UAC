@@ -2,14 +2,13 @@
     "game_version": [
         1,
         21,
-        0
+        1
     ],
     "fixed_files": [
         "manifest.json",
         "scripts/library/build/classes/databaseBuilder.js",
         "scripts/example/commands/staff/gui.js",
-        "scripts/example/index.js",
-        "scripts/example/commands/staff/"
+        "scripts/example/index.js"
     ],
     "fixing_files_in_progress": [
         "scripts/modules/hotbar_message.js"
@@ -21,8 +20,9 @@
         }
     ],
     "notes": [
-        "icm check; if (Database.get('icmtoggledummy') !== 1 && !sender.hasTag('staffstatus')) return sender.tellraw(`§¶§cUAC ► §c§lThe Realm Owner currently has Player Commands Disabled`);",
+        "icm check; if (Database.get('icmtoggle') !== 1 && !sender.hasTag('staffstatus')) return sender.tellraw(`§¶§cUAC ► §c§lThe Realm Owner currently has Player Commands Disabled`);",
         "fixed_files[1] Modified to use dynamic properties",
-        "Make JS interpreter for scoreboard to Dynamic properties"
+        "Make JS interpreter for scoreboard to Dynamic properties",
+        "Combat log punish not working"
     ]
 }

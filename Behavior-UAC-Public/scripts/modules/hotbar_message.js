@@ -24,7 +24,7 @@ function hotbar_message(player) {
         let plr_suicide = scoreTest(player, 'suicide') || 0;
         let unban_window = scoreTest(player, 'unbantimer') || 0;
         let playercount = Database.get('playercount');
-        let entitycount = Database.get('entitycount');
+        let entitycount = Database.get('entitycount') || 0;
 
         let kills = scoreTest(player, 'kills') || 0;
         let deaths = scoreTest(player, 'deaths') || 0;

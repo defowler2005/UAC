@@ -100,7 +100,7 @@ Server.command.register(registerInformation, (chatmsg, args) => {
             },
             {
                 sys: `Player Commands`,
-                dummy: `icmtoggledummy`,
+                dummy: `icmtoggle`,
                 obj: `icmtoggle`
             },
             {

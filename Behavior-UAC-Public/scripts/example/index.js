@@ -93,6 +93,132 @@ system.runInterval(() => {
                 if (opabuse_bool) { op_abuse(player) }
                 setScore(player, "has_gt", 1, false);
 
+                //Ticking for the removal of tp_cooldown for home command every 1 second.
+                const oldTp_cooldown = scoreTest(player, 'tp_cooldown');
+                if (oldTp_cooldown >= 0) {
+                    setScore(player, 'tp_cooldown', oldTp_cooldown - 1);
+                }
+
+                //Ticking for the removal of combat_timer for every 1 second.
+                const oldCombat_timer = scoreTest(player, 'combat_timer');
+                if (oldCombat_timer >= 0) {
+                    setScore(player, 'combat_timer', oldCombat_timer - 1);
+
+                    if (oldCombat_timer === 10) { // 10 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §c❚❚❚❚❚❚❚❚❚❚'
+                                    }
+                                ]
+                            }
+                        )
+                    } else if (oldCombat_timer === 9) { // 9 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚§c❚❚❚❚❚❚❚❚❚'
+                                    }
+                                ]
+                            }
+                        )
+                    } else if (oldCombat_timer === 8) { // 8 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚§c❚❚❚❚❚❚❚❚'
+                                    }
+                                ]
+                            }
+                        )
+                    } else if (oldCombat_timer === 7) { // 7 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚§c❚❚❚❚❚❚❚'
+                                    }
+                                ]
+                            }
+                        )
+                    } else if (oldCombat_timer === 6) { // 6 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚§c❚❚❚❚❚❚'
+                                    }
+                                ]
+                            }
+                        )
+                    } else if (oldCombat_timer === 5) { // 5 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚§c❚❚❚❚❚'
+                                    }
+                                ]
+                            }
+                        )
+                    } else if (oldCombat_timer === 4) { // 4 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚§c❚❚❚❚'
+                                    }
+                                ]
+                            }
+                        )
+                    } else if (oldCombat_timer === 3) { // 3 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚§c❚❚❚'
+                                    }
+                                ]
+                            }
+                        )
+                    } else if (oldCombat_timer === 2) { // 2 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚§c❚❚'
+                                    }
+                                ]
+                            }
+                        )
+                    } else if (oldCombat_timer === 1) { // 1 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚❚§c❚'
+                                    }
+                                ]
+                            }
+                        )
+                    } else if (oldCombat_timer === 0) { // 0 seconds.
+                        player.onScreenDisplay.setActionBar(
+                            {
+                                "rawtext": [
+                                    {
+                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚❚❚\n'
+                                    }, {
+                                        "text": '§¶§dNO LONGER IN COMBAT'
+                                    }
+                                ]
+                            }
+                        )
+                    }
+                }
+
                 //world border Custom Spawn TP
                 if (WorldBorderbool) {
                     const x = Math.floor(player.location.x);
@@ -228,25 +354,63 @@ world.afterEvents.playerSpawn.subscribe((data) => {
     if (scoreTest(player, 'seen_gui') == 0) {
         waitMove.set(player, [x, y, z]);
     }
-    if (scoreTest('mrunban', 'unban') == 0) {
+    if (Database.get('unban') === 1) {
         playerbans(player);
     }
     if (scoreTest(player, 'online') == 1) return;
-    overworld.runCommandAsync(`execute as "${name}" run function UAC/packages/playerjoined`);
+    overworld.runCommandAsync(`execute as ${name} run function UAC/packages/playerjoined`);
 });
 
-world.afterEvents.playerLeave.subscribe(data => {
+//Anti-combat punisher.
+world.afterEvents.playerJoin.subscribe((data) => {
+    try {
+        const player = world.getPlayers({ name: data.playerName })[0];
+        console.warn(`${player.name}\n${scoreTest(player, 'combat_timer')}\n${Database.get('clmtoggle')}`);
+        if (scoreTest(player, 'combat_timer') >= 1) {
+            system.runTimeout(() => {
+                if (Database.get('clmtoggle') === 1) { // Kill.
+                    player.kill();
+                    console.warn('clearing that md rn dawg!');
+                    tellrawServer(`§¶§cUAC §¶§b► §6Anti-C Logging §d ${player.name} §bwas killed due combat logging.`);
+                } else if (Database.get('clmtoggle') === 2) { // Clear.
+                    const inventory = player.getComponent('minecraft:inventory').container;
+                    for (let i = 0; i < inventory.size; i++) {
+                        inventory.setItem(i);
+                    }
+                    tellrawServer(`§¶§cUAC §¶§b► §6Anti-C Logging §d${player.name} §bwas cleared due combat logging.`);
+                } else return; // Off.
+            }, 120);
+        }
+    } catch (error) {
+        console.warn(`An error occured while punishing combat logger ${data.playerName}: ${error}\n${error.stack}`);
+    }
+});
+
+world.afterEvents.playerLeave.subscribe(() => {
     overworld.runCommandAsync(`scoreboard players set * online 0`);
     overworld.runCommandAsync(`scoreboard players set @a online 1`);
 });
 
-//  chat filter example code
+//In combat handling.
+world.afterEvents.entityHurt.subscribe((data) => {
+    try {
+        if (!data.damageSource.damagingEntity) return;
+        const hurtEntity = data.hurtEntity;
+        const damagingEntity = data.damageSource.damagingEntity;
+        setScore(hurtEntity, 'combat_timer', 10);
+        setScore(damagingEntity, 'combat_timer', 10);
+    } catch (error) {
+        console.warn(`An error occured while handling combat handler:" ${error}\n${error.stack}`);
+    };
+}, { entityTypes: ['minecraft:player'] });
+
+// chat filter example code
 world.beforeEvents.chatSend.subscribe((data) => {
     try {
-        let crbool = scoreTest('crdummy', 'chatrank');
-        let acsbool = scoreTest('acsdummy', 'acstoggle');
+        let crbool = Database.get('chatrank');
+        let acsbool = Database.get('acstoggle');
         let time = (scoreTest(data.sender, 'chatspam') / 20);
-        let mutetime = (time / 60)
+        let mutetime = (time / 60);
 
         if (data.sender.hasTag('muted')) {
             (data.cancel = true);
