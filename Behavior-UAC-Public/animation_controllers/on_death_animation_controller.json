@@ -5,11 +5,7 @@
       "initial_state": "default",
       "states": {
         "default": {
-          "transitions": [
-            {
-              "condition": "(variable.death_effect == 1) && !query.is_alive"
-            }
-          ]
+          "transitions": []
         },
         "condition": {
           "transitions": [
