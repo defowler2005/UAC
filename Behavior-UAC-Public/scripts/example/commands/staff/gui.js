@@ -283,8 +283,8 @@ const guiScheme = {
         text.push(`§l§bWelcome!`)
         text.push(`§l§bProtected by §cUAC \n§bby §dNightwalkerLots`)
         text.push(`§l`) //space
-        text.push(`§6UAC.help §bfor player commands`)
-        text.push(`§6UAC.gui §bfor ease of access`)
+        text.push(`§6${configuration.prefix}help §bfor player commands`)
+        text.push(`§6${configuration.prefix}gui §bfor ease of access`)
         text.push(`§l`) //space
         text.push(`§bJoin the UAC discord for updates`)
         text.push(`§6${configuration.discord_server}`)
