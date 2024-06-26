@@ -287,18 +287,20 @@ const guiScheme = {
         text.push(`§6UAC.gui §bfor ease of access`)
         text.push(`§l`) //space
         text.push(`§bJoin the UAC discord for updates`)
-        text.push(`§6https://discord.gg/HzymT3kWSQ`)
+        text.push(`§6${configuration.discord_server}`)
+        text.push('§l') //space
+        text.push('§6This Discord server is not operated by §dNightwalkerLots but rather by defowler2005, who enjoys programming, and likes UAC ')
+        text.push('§l') //space
         v.body(text.join('\n§r'))
         const welcome = [
             ['Accept', plr => guiScheme.pcmd.welcome_accept(plr)]
-        ]
-
+        ];
 
         for (let [name, f] of welcome) v.button(name)
 
-        return (plr) => void v.show(plr).then(v => {
+        return (plr) => void v.show(plr).then((v) => {
             if (v.canceled) return
-            welcome[v.selection][1](plr)
+            welcome[v.selection][1](plr);
         })
     })(),
 
