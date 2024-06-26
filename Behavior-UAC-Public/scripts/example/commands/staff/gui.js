@@ -3,7 +3,7 @@ import { Database, Server } from '../../../library/Minecraft.js';
 import { ActionFormData, ModalFormData } from '@minecraft/server-ui';
 import { scoreTest, setScore } from '../../../library/utils/score_testing.js'
 import { tellrawStaff } from '../../../library/utils/prototype.js';
-const obj = {}
+const obj = {};
 
 const moduleRequires = ['has_xx', 'has_gt']
 export const moduleDefs_prots = [
@@ -499,11 +499,11 @@ const guiScheme = {
             text.push('') // newline
 
             // permissions
-            text.push('§l§ePermissions')
-            const isStaff = target.hasTag('staffstatus')
-            const isOwner = target.hasTag('ownerstatus')
-            const mayFly = obj('2KK001').players.get(plr) == 725
-            const isGodmode = target.hasTag('tgmGodMode')
+            text.push('§l§ePermissions');
+            const isStaff = target.hasTag('staffstatus');
+            const isOwner = target.hasTag('ownerstatus');
+            const mayFly = scoreTest(target, '2KK001') === 725;
+            const isGodmode = target.hasTag('tgmGodMode');
             const gamemode = target.getGameMode();
 
             text.push(`Staff: ${isStaff ? '§aYes' : '§eNo'}`)
@@ -511,7 +511,7 @@ const guiScheme = {
             text.push(`Mayfly: ${mayFly ? '§aYes' : '§eNo'}`)
             text.push(`Godmode: ${isGodmode ? '§aYes' : '§eNo'}`)
             text.push(`Gamemode: §b${gamemode.charAt(0).toUpperCase()}`)
-            text.push('') // newline
+            text.push(''); // newline
 
             // detections
             /** @type {[id: string, name: string, max: number][]} */
@@ -519,11 +519,10 @@ const guiScheme = {
                 ['warn', 'Warns', 3],
                 ['gmc_flag', 'GMC flags', 4],
                 ['warnillegal', 'Illegal item warns', 9],
-            ]
+            ];
             text.push('§l§eDetections')
             for (let [id, name, max] of detections) {
-                text.push(`${name}:  §e${scoreTest(target, id) ?? 0}§r / §e${max}§r`);
-
+                text.push(`${name}:  §e${scoreTest(target, id)}§r / §e${max}§r`);
 
                 text.push('') // newline
 
@@ -534,10 +533,15 @@ const guiScheme = {
                     ['ancient_debris', 'Netherite'],
                     ['emerald_ore', 'Emeralds'],
                     ['iron_ore', 'Iron'],
+                    ['copper_ore', 'Copper'],
+                    ['coal_ore', 'Coal']
                 ];
-                text.push('§l§eOres Mined')
-                text.push(`${name}: §e${scoreTest(target, id) === undefined ? 0 : scoreTest(target, id)}§r`);
-            }
+                for (const [id, name] of ores_mined) {
+                text.push('§l§eOres Mined');
+                text.push(`${name}: §e${scoreTest(target, id)}§r`);
+                }
+            };
+
             v.body(text.join('\n§r'))
             v.button('Back')
             v.show(plr).then(() => guiScheme.pcmd.exec(plr, target))
@@ -632,6 +636,8 @@ const guiScheme = {
             let gold = scoreTest(plr, 'gold_ore');
             let iron = scoreTest(plr, 'iron_ore');
             let lapis = scoreTest(plr, 'lapis_ore');
+            let copper = scoreTest(plr, 'copper_ore');
+            let coal = scoreTest(plr, 'coal_ore');
             let netherite = scoreTest(plr, 'ancient_debris');
 
             text.push(`§d§lTime Played:`);
