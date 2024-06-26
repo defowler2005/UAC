@@ -7,7 +7,7 @@
     */
     "pack_info": {
         "type": "label",
-        "text": "§¶§c§lUAC ► §bUnity Anti-Cheat",
+        "text": "uac.mainlabel",
         "color": [
             1.0,
             1.0,
