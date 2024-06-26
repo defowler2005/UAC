@@ -125,15 +125,21 @@ export function tellraw(message) {
     }
     catch { return }
 }
-
+/**
+ * 
+ * @param {Player} player 
+ * @param {String} message 
+ * @returns 
+ */
 export function hotbar(player, message) {
     try {
-        return player.setActionBar(`${message.replaceAll('"', '\\"')}`);
+        return player.onScreenDisplay.setActionBar(`${message.replaceAll('"', '\\"')}`);
     }
     catch { return }
 };
+
 // return gamemode string.
-export function getGamemode(player, GM) {
+export function getGamemode(player, GM) { //Redundant function...
     try {
         return world.getPlayers({ name: player.name, gameMode: GM }).length > 0;
     } catch {

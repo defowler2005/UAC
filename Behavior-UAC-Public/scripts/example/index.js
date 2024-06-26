@@ -7,6 +7,7 @@ import { playerbans } from '../modules/bans.js';
 import { ops } from '../modules/oneplayersleep.js';
 import { lagclear } from '../modules/lagclear.js';
 import { movement_check } from '../modules/movement.js';
+import { lockdown } from '../modules/lockdown.js';
 import { waitMove } from './commands/staff/gui.js';
 import { hotbar_message } from '../modules/hotbar_message.js';
 import { op_abuse } from '../modules/opabuse.js';
@@ -15,15 +16,16 @@ import { Check_Packet_Behavior } from '../modules/bad_packet.js';
 
 //game resource dependancies
 import { world as World, BlockTypes, system } from "@minecraft/server";
-import { tellrawStaff, tp, tellrawServer, TellRB } from '../library/utils/prototype.js';
+import { tellrawStaff, tp, tellrawServer, TellRB, hotbar } from '../library/utils/prototype.js';
 import { scoreTest, setScore } from '../library/utils/score_testing.js';
 import { world, Player } from '@minecraft/server';
-import { Database, Server } from '../library/Minecraft.js';
+import { Database, Server, worldLoaded } from '../library/Minecraft.js';
 import { configuration } from '../library/build/configurations.js';
+import { opCheck } from '../modules/OpCheck.js';
 
 const overworld = world.getDimension('overworld');
 
-function worldBorder(player) {
+function antiCrash(player) {
     const { x, y, z } = player.location
     const name = player.getName();
     if (Math.abs(x) >= 30000000 || Math.abs(y) >= 30000000 || Math.abs(z) >= 30000000) {
@@ -33,7 +35,7 @@ function worldBorder(player) {
         //player.runCommandAsync("kill @s");
         try { player.runCommandAsync(`kick "${player.nameTag}" §r\n§l§c\n§r\n§eKicked By:§r §l§3§•Unity Anti•Cheat§r\n§bReason:§r §c§lCrash Attempt`); }
         catch { player.runCommandAsync(`event entity @s uac:ban_main`); }
-        //return;
+        return;
 
         //Anti-Crasher contributed by SmoothieMC
     }
@@ -50,221 +52,158 @@ function worldBorder(player) {
 let on_tick = 0;
 
 system.runInterval(() => {
-    try {
-        let SpawnX = Database.get('Spawn_Coord_X') || 0;
-        let SpawnY = Database.get('Spawn_Coord_Y') || 90;
-        let SpawnZ = Database.get('Spawn_Coord_Z') || 0;
-        let BorderX = Database.get('Border_Coord_X') || 60;
-        let BorderZ = Database.get('Border_Coord_Z') || 60;
-        let WorldBorderbool = Database.get('wbmtoggle');
-        let uoimbool = Database.get('uoimtoggle');
-        let opsbool = Database.get('opstoggle');
-        let lagclear_bool = Database.get('ltmtoggle');
-        let opabuse_bool = Database.get('opamtoggle');
-        on_tick++;
+    if (worldLoaded) {
+        try {
+            let SpawnX = Database.get('Spawn_Coord_X') || 0;
+            let SpawnY = Database.get('Spawn_Coord_Y') || 90;
+            let SpawnZ = Database.get('Spawn_Coord_Z') || 0;
+            let BorderX = Database.get('Border_Coord_X') || 60;
+            let BorderZ = Database.get('Border_Coord_Z') || 60;
+            let WorldBorderbool = Database.get('wbmtoggle');
+            let uoimbool = Database.get('uoimtoggle');
+            let opsbool = Database.get('opstoggle');
+            let lagclear_bool = Database.get('ltmtoggle');
+            let opabuse_bool = Database.get('opamtoggle');
+            on_tick++;
 
-        if (uoimbool == 1) { unobtainable(); }
+            if (uoimbool == 1) { unobtainable(); }
 
-        if (on_tick == 10) {
-            if (opsbool) { ops(); }
-            if (lagclear_bool == 1) lagclear();
-        }
-
-        if (on_tick == 15) {
-            const entitycount = Database.get('entitycount');
-            if (entitycount >= 340) {
-                overworld.runCommandAsync(`function UAC/packages/autoclear-manual`);
-                tellrawServer(`§¶§cUAC §¶§b► §cEmergency Lag Clear §bwas performed due to entity count going over §6340§b.`);
-                TellRB(`flag_0`, `UAC SYSTEM ► Emergency Lag Clear triggered due to entity count going over 340`);
+            if (on_tick == 10) {
+                if (opsbool) { ops(); }
+                if (lagclear_bool == 1) lagclear();
             }
-        }
-        // one second module functions -- 2nd schedual  -- ran from backend not players
-        if (on_tick >= 20) {
-            let players = world.getPlayers();
-            for (let player of players) {
-                const name = player.getName();
-                worldBorder(player);
-                if (Database.get('unban') === 0) {
-                    playerbans(player);
+
+            if (on_tick == 15) {
+                const entitycount = Database.get('entitycount');
+                if (entitycount >= 340) {
+                    overworld.runCommandAsync(`function UAC/packages/autoclear-manual`);
+                    tellrawServer(`§¶§cUAC §¶§b► §cEmergency Lag Clear §bwas performed due to entity count going over §6340§b.`);
+                    TellRB(`flag_0`, `UAC SYSTEM ► Emergency Lag Clear triggered due to entity count going over 340`);
                 }
-                hotbar_message(player);
-                movement_check(player);
-                afk_kick(player);
-                if (opabuse_bool) { op_abuse(player) }
-                setScore(player, "has_gt", 1, false);
+            }
 
-                //Ticking for the removal of tp_cooldown for home command every 1 second.
-                const oldTp_cooldown = scoreTest(player, 'tp_cooldown');
-                if (oldTp_cooldown >= 0) {
-                    setScore(player, 'tp_cooldown', oldTp_cooldown - 1);
-                }
-
-                //Ticking for the removal of combat_timer for every 1 second.
-                const oldCombat_timer = scoreTest(player, 'combat_timer');
-                if (oldCombat_timer >= 0) {
-                    setScore(player, 'combat_timer', oldCombat_timer - 1);
-
-                    if (oldCombat_timer === 10) { // 10 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §c❚❚❚❚❚❚❚❚❚❚'
-                                    }
-                                ]
-                            }
-                        )
-                    } else if (oldCombat_timer === 9) { // 9 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚§c❚❚❚❚❚❚❚❚❚'
-                                    }
-                                ]
-                            }
-                        )
-                    } else if (oldCombat_timer === 8) { // 8 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚§c❚❚❚❚❚❚❚❚'
-                                    }
-                                ]
-                            }
-                        )
-                    } else if (oldCombat_timer === 7) { // 7 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚§c❚❚❚❚❚❚❚'
-                                    }
-                                ]
-                            }
-                        )
-                    } else if (oldCombat_timer === 6) { // 6 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚§c❚❚❚❚❚❚'
-                                    }
-                                ]
-                            }
-                        )
-                    } else if (oldCombat_timer === 5) { // 5 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚§c❚❚❚❚❚'
-                                    }
-                                ]
-                            }
-                        )
-                    } else if (oldCombat_timer === 4) { // 4 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚§c❚❚❚❚'
-                                    }
-                                ]
-                            }
-                        )
-                    } else if (oldCombat_timer === 3) { // 3 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚§c❚❚❚'
-                                    }
-                                ]
-                            }
-                        )
-                    } else if (oldCombat_timer === 2) { // 2 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚§c❚❚'
-                                    }
-                                ]
-                            }
-                        )
-                    } else if (oldCombat_timer === 1) { // 1 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚❚§c❚'
-                                    }
-                                ]
-                            }
-                        )
-                    } else if (oldCombat_timer === 0) { // 0 seconds.
-                        player.onScreenDisplay.setActionBar(
-                            {
-                                "rawtext": [
-                                    {
-                                        "text": '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚❚❚\n'
-                                    }, {
-                                        "text": '§¶§dNO LONGER IN COMBAT'
-                                    }
-                                ]
-                            }
-                        )
+            // one second module functions -- 2nd schedual  -- ran from backend not players
+            if (on_tick >= 20) {
+                let players = world.getPlayers();
+                for (let player of players) {
+                    const name = player.getName();
+                    antiCrash(player);
+                    if (Database.get('unban') === 0) {
+                        playerbans(player);
                     }
-                }
+                    lockdown(player)
+                    hotbar_message(player);
+                    opCheck(player);
+                    movement_check(player);
+                    afk_kick(player);
+                    if (opabuse_bool) { op_abuse(player) };
+                    setScore(player, "has_gt", 1, false);
 
-                //world border Custom Spawn TP
-                if (WorldBorderbool) {
-                    const x = Math.floor(player.location.x);
-                    const z = Math.floor(player.location.z);
-                    if (player.hasTag(configuration.staff_tag) === false) {
-                        if (Math.abs(x - (-BorderX + BorderZ) / 2) > Math.abs(-BorderX - BorderZ) / 2 || Math.abs(z - (-BorderZ + BorderZ) / 2) > Math.abs(-BorderZ - BorderZ) / 2) {
-                            tp(player, SpawnX, SpawnY, SpawnZ);
-                            tellrawServer(`§¶§cUAC §¶§b► §d${player.getName()} §btried passing world border`);
-                            TellRB(`flag_0`, `UAC ► ${player.getName()} tried to pass the world border`);
+                    //Ticking for the removal of tp_cooldown for home command every 1 second.
+                    const oldTp_cooldown = scoreTest(player, 'tp_cooldown');
+                    if (oldTp_cooldown >= 1) {
+                        setScore(player, 'tp_cooldown', oldTp_cooldown - 1);
+                    }
+
+                    //Ticking for the removal of combat_timer for every 1 second.
+                    const oldCombat_timer = scoreTest(player, 'combat_timer');
+                    if (oldCombat_timer >= 1) {
+                        setScore(player, 'combat_timer', oldCombat_timer - 1);
+                        console.warn(oldCombat_timer)
+                        if (oldCombat_timer === 10) { // 10 seconds.
+                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §c❚❚❚❚❚❚❚❚❚❚');
                         }
+
+                        else if (oldCombat_timer === 9) { // 9 seconds.
+                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚§c❚❚❚❚❚❚❚❚❚');
+                        }
+
+                        else if (oldCombat_timer === 8) { // 8 seconds.
+                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚§c❚❚❚❚❚❚❚❚');
+                        }
+
+                        else if (oldCombat_timer === 7) { // 7 seconds.
+                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚§c❚❚❚❚❚❚❚');
+                        }
+
+                        else if (oldCombat_timer === 6) { // 6 seconds.
+                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚§c❚❚❚❚❚❚');
+                        }
+
+                        else if (oldCombat_timer === 5) { // 5 seconds.
+                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚§c❚❚❚❚❚');
+                        }
+
+                        else if (oldCombat_timer === 4) { // 4 seconds.
+                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚§c❚❚❚❚');
+                        }
+
+                        else if (oldCombat_timer === 3) { // 3 seconds.
+                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚§c❚❚❚');
+                        }
+
+                        else if (oldCombat_timer === 2) { // 2 seconds.
+                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚§c❚❚');
+                        }
+
+                        else if (oldCombat_timer === 1) { // 1 seconds.
+                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚❚§c❚');
+                        };
+                        // oldCombat_timer for some reason doesn't reach 0 so used this instead for now.
+                        system.runTimeout(() => { hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚❚❚\n        §dNO LONGER IN COMBAT'); }, 200);
+                    };
+
+                    //world border Custom Spawn TP
+                    if (WorldBorderbool) {
+                        const x = Math.floor(player.location.x);
+                        const z = Math.floor(player.location.z);
+                        if (player.hasTag(configuration.staff_tag) === false) {
+                            if (Math.abs(x - (-BorderX + BorderZ) / 2) > Math.abs(-BorderX - BorderZ) / 2 || Math.abs(z - (-BorderZ + BorderZ) / 2) > Math.abs(-BorderZ - BorderZ) / 2) {
+                                tp(player, SpawnX, SpawnY, SpawnZ);
+                                tellrawServer(`§¶§cUAC §¶§b► §d${player.getName()} §btried passing world border`);
+                                TellRB(`flag_0`, `UAC ► ${player.getName()} tried to pass the world border`);
+                            }
+                        }
+                    };
+
+                    //Is_On_Ground.
+                    if (player.isOnGround) {
+                        player.addTag('Is_On_Ground');
+                    } else {
+                        player.removeTag('Is_On_Ground');
+                    };
+
+                    //Entity counter.
+                    const allEntities = world.getDimension('overworld').getEntities({ excludeTypes: ['minecraft:player'] });
+                    Database.set('entitycount', allEntities.length);
+
+                    //Player counter.
+                    const allPlayers = world.getAllPlayers();
+                    Database.set('playercount', allPlayers.length);
+
+                    //Namespoof patch provided by the Paradox Team.
+                    let char_length = player.nameTag;
+                    for (let i = 0; i < char_length.length; i++) {
+                        if (char_length.charCodeAt(i) > 255) {
+                            console.warn(`Illegal bytes outside the UTF-8 range`);
+                            tellrawStaff(`§¶§cUAC STAFF STAFF ► §6Anti-NameSpoof §bBypass was prevented from §d${name}`);
+                            TellRB(`flag_1`, `UAC SYSTEM ► ${name} was kicked for namespoofing`);
+                            try { player.runCommandAsync(`kick "${player.nameTag}" §r\n§l§c\n§r\n§eKicked By:§r §l§3§•Unity Anti•Cheat§r\n§bReason:§r §c§lInvalid GamerTag`); }
+                            catch { player.runCommandAsync(`event entity @s uac:ban_main`); }
+                        }; //console.warn(`Everything appears normal`);
                     }
-                };
-
-                //Entity counter
-                const allEntities = world.getDimension('overworld').getEntities({ excludeTypes: ['minecraft:player'] });
-                Database.set('entitycount', allEntities.length);
-
-                //Player counter
-                const allPlayers = world.getAllPlayers();
-                Database.set('playercount', allPlayers.length);
-
-                //Namespoof patch provided by the Paradox Team
-                let char_length = player.nameTag;
-                for (let i = 0; i < char_length.length; i++) {
-                    if (char_length.charCodeAt(i) > 255) {
-                        console.warn(`Illegal bytes outside the UTF-8 range`);
-                        tellrawStaff(`§¶§cUAC STAFF STAFF ► §6Anti-NameSpoof §bBypass was prevented from §d${name}`);
-                        TellRB(`flag_1`, `UAC SYSTEM ► ${name} was kicked for namespoofing`);
-                        try { player.runCommandAsync(`kick "${player.nameTag}" §r\n§l§c\n§r\n§eKicked By:§r §l§3§•Unity Anti•Cheat§r\n§bReason:§r §c§lInvalid GamerTag`); }
-                        catch { player.runCommandAsync(`event entity @s uac:ban_main`); }
-                    }
-                    //console.warn(`Everything appears normal`);
+                }; on_tick = 0;
+            }
+            for (let player of world.getPlayers()) {
+                Check_Packet_Behavior(player);
+                if (scoreTest(player, 'fzplr') == 1) {
+                    tp(player, scoreTest(player, 'lastpos_x'), scoreTest(player, 'lastpos_y'), scoreTest(player, 'lastpos_z'));
                 }
             }
-            on_tick = 0;
-        }
-        for (let player of world.getPlayers()) {
-            Check_Packet_Behavior(player);
-            if (scoreTest(player, 'fzplr') == 1) {
-                if (player.hasTag(configuration.staff_tag)) { return player.runCommandAsync(`scoreboard players set @s fzplr 0`); }
-                tp(player, scoreTest(player, 'lastpos_x'), scoreTest(player, 'lastpos_y'), scoreTest(player, 'lastpos_z'));
-            }
-        }
-    } catch (e) {
-        console.warn(JSON.stringify(e.stack), e)
-    }
+        } catch (e) {
+            console.warn(JSON.stringify(e.stack), e)
+        }; //console.error('Players loaded!');
+    }// else console.error('Players not loaded yet!');
 });
 
 const unobtainables = {
@@ -330,7 +269,6 @@ World.beforeEvents.playerPlaceBlock.subscribe(({ block, player }) => {
 });
 
 world.beforeEvents.itemUseOn.subscribe((eventData) => {
-    let item = eventData.itemStack.typeId;
     let name = eventData.source.nameTag;
     let by_player = undefined;
     let p = world.getPlayers();
@@ -357,30 +295,29 @@ world.afterEvents.playerSpawn.subscribe((data) => {
     if (Database.get('unban') === 1) {
         playerbans(player);
     }
-    if (scoreTest(player, 'online') == 1) return;
+    if (scoreTest(player, 'online') === 1) return;
     overworld.runCommandAsync(`execute as ${name} run function UAC/packages/playerjoined`);
 });
 
 //Anti-combat punisher.
-world.afterEvents.playerJoin.subscribe((data) => {
+world.afterEvents.playerSpawn.subscribe((data) => {
+    if (!data.initialSpawn) return;
     try {
-        const player = world.getPlayers({ name: data.playerName })[0];
-        console.warn(`${player.name}\n${scoreTest(player, 'combat_timer')}\n${Database.get('clmtoggle')}`);
+        const player = data.player;
         if (scoreTest(player, 'combat_timer') >= 1) {
-            system.runTimeout(() => {
-                if (Database.get('clmtoggle') === 1) { // Kill.
-                    player.kill();
-                    console.warn('clearing that md rn dawg!');
-                    tellrawServer(`§¶§cUAC §¶§b► §6Anti-C Logging §d ${player.name} §bwas killed due combat logging.`);
-                } else if (Database.get('clmtoggle') === 2) { // Clear.
-                    const inventory = player.getComponent('minecraft:inventory').container;
-                    for (let i = 0; i < inventory.size; i++) {
-                        inventory.setItem(i);
-                    }
-                    tellrawServer(`§¶§cUAC §¶§b► §6Anti-C Logging §d${player.name} §bwas cleared due combat logging.`);
-                } else return; // Off.
-            }, 120);
+            if (Database.get('clmtoggle') === 1) { // Kill.
+                player.kill();
+                console.warn('clearing...');
+                tellrawServer(`§¶§cUAC §¶§b► §6Anti-C Logging §d${player.name} §bwas killed due combat logging.`);
+            } else if (Database.get('clmtoggle') === 2) { // Clear.
+                const inventory = player.getComponent('minecraft:inventory').container;
+                for (let i = 0; i < inventory.size; i++) {
+                    inventory.setItem(i);
+                }
+                tellrawServer(`§¶§cUAC §¶§b► §6Anti-C Logging §d${player.name} §bwas cleared due combat logging.`);
+            } else return; // Off.
         }
+        setScore(player, 'combat_timer', 0);
     } catch (error) {
         console.warn(`An error occured while punishing combat logger ${data.playerName}: ${error}\n${error.stack}`);
     }
@@ -389,6 +326,28 @@ world.afterEvents.playerJoin.subscribe((data) => {
 world.afterEvents.playerLeave.subscribe(() => {
     overworld.runCommandAsync(`scoreboard players set * online 0`);
     overworld.runCommandAsync(`scoreboard players set @a online 1`);
+});
+
+//On death handling.
+world.afterEvents.entityDie.subscribe((data) => {
+    const player = data.deadEntity;
+    if (player.typeId !== 'minecraft:player') return;
+    setScore(player, 'killstreak', 0);
+    setScore(player, 'deaths', 1);
+    player.getTags().filter((tag) => tag.includes('Home-Name'))?.forEach((homeName) => player?.removeTag(homeName));
+    const x = Math.floor(player.location.x);
+    const y = Math.floor(player.location.y);
+    const z = Math.floor(player.location.z);
+
+    setScore(player, 'X_Coord_D', x);
+    setScore(player, 'Y_Coord_D', y);
+    setScore(player, 'Z_Coord_D', z);
+
+    if (Database.get('dethtoggle') === 1) {
+        player.runCommand('execute as @a[r=8] run playsound random.levelup @s ~~~ 2');
+        player.runCommand('summon lightning_bolt ~~3~');
+        player.runCommand('function particle/totem_poof');
+    }
 });
 
 //In combat handling.
@@ -418,10 +377,8 @@ world.beforeEvents.chatSend.subscribe((data) => {
                 data.sender.tellraw(`§¶§c§lUAC ► §bYou are currently muted for §c${time} §bseconds left`)
             } else {
                 return data.sender.tellraw(`§¶§c§lUAC ► §bYou are currently muted for §c${mutetime} §bminutes left`)
-            }
-            return
+            } return;
         }
-
 
         if (acsbool) { setScore(data.sender, "chatspam", 100, true); }
         if (acsbool && scoreTest(data.sender, 'chatspam') >= 500 && !data.sender.hasTag(configuration.staff_tag)) {

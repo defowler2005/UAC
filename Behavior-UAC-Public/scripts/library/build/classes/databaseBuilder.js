@@ -20,7 +20,7 @@ export class databaseBuilder {
     set(key, value) {
         try {
             //console.warn(`Set ${key} to ${value}`)
-            world.setDynamicProperty(`${key}`, value);
+            world.setDynamicProperty(`${key}`, value === null ? 0 : value);
         } catch (error) {
             console.warn(`An error occured while setting dynamic property in database: ${error}\n${error.stack}`)
         }
@@ -32,11 +32,11 @@ export class databaseBuilder {
      * @returns {number|boolean|string|null} The value of the dynamic property, or null if it doesn't exist.
      */
     get(key) {
-        if (!world.getDynamicProperty(`${key}`)) {
+        if (!world.getDynamicProperty(key)) {
             //console.warn(`Dynamic property: ${key} does not exist!`);
-            world.setDynamicProperty(`${key}`, undefined);
-            return null;
-        }; return world.getDynamicProperty(`${key}`);
+            world.setDynamicProperty(key, 0);
+            return 0;
+        }; return world.getDynamicProperty(key);
     }
 
     /**
@@ -44,7 +44,7 @@ export class databaseBuilder {
      * @param {string} key - The key for the dynamic property.
      */
     delete(key) {
-        if (!world.getDynamicProperty(`${key}`)) return console.warn(`Dynamic property: ${key} does not exist!`);
+        if (!world.getDynamicProperty(key)) return console.warn(`Dynamic property: ${key} does not exist!`);
     }
 };
 

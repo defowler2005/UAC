@@ -15,7 +15,7 @@ Server.command.register(registerInformation, (chatmsg, args) => {
     try {
 
         let input = args.join(' ').replace('@', '').replace(/"/g, '');
-        let playerfound = [...world.getPlayers()].find(player => player.getName() === input);
+        let playerfound = [...world.getPlayers()].find((player) => player.getName() === input);
         //let playername = playerfound.getName();
         const { sender } = chatmsg;
         const name = sender.getName();

@@ -11,7 +11,7 @@ export class CommandBuilder {
      * @example import { Server } from "../../Minecraft";
      *  const server = new Server();
      *  server.commands.register({ name: 'ping' }, (data, args) => {
-     *  server.broadcast('Pong!', data.sender.nameTag);
+     *  server.broadcast('Pong!', data.sender.name);
      * });
      */
     register(register, callback) {

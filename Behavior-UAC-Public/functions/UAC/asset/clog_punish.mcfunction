@@ -7,6 +7,3 @@ execute @s[scores={clmtoggle=2}] ~~~ tellraw @a {"rawtext":[{"text":"§¶§cUAC 
 scoreboard players set @s in_combat 0
 scoreboard players set @s hometp 3
 scoreboard players set @s combat_timer 0
-#This hides this from the in-game function command directory
-execute @f ~~~ hide
-tag @f[tag=""] add hide

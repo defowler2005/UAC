@@ -43,8 +43,7 @@ export class ServerBuilder {
         }
         catch (error) {
             return { error: true };
-        }
-        ;
+        };
     };
 
     /**

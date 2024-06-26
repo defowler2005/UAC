@@ -26,26 +26,23 @@ function setScore(target, objective, amount, add = false) {
     }
 };
 
+//Automatically add objectives and set default 0 score for all players if non existent.
 system.runInterval(() => {
-    const allObjectives = ['diamond_ore', 'emerald_ore','coal_ore', 'gold_ore', 'iron_ore', 'lapis_ore', 'ancient_debris', 'copper_ore', 'tp_cooldown', 'tpa', 'tp_cooldown'];
+    const allObjectives = ['X_Coord_D', 'Y_Coord_D', 'Z_Coord_D', 'diamond_ore', 'emerald_ore', 'coal_ore', 'gold_ore', 'iron_ore', 'lapis_ore', 'ancient_debris', 'copper_ore', 'tp_cooldown', 'tpa', 'tp_cooldown', 'hometp', 'combat_timer'];
     try {
         allObjectives.forEach((obj) => {
             world.scoreboard.addObjective(obj, obj.replace('_', ' ').charAt(0).toUpperCase());
         })
-    } catch (error) {
-        //console.warn(`${error}\n${error.stack}`)
-    };
-    try {
         world.getAllPlayers().forEach((player) => {
             allObjectives.forEach((obj) => {
                 const objective = world.scoreboard.getObjective(obj);
-                if (typeof objective?.getScore(player.scoreboardIdentity) !== "number") {
+                if (typeof objective?.getScore(player.scoreboardIdentity) !== 'number') {
                     objective?.addScore(player.scoreboardIdentity, 0);
                 }
             })
         });
     } catch (error) {
-        console.warn(`${error}\n${error.stack}`);
+        if (`${error}`.includes('tracked') === false) console.warn(`${error}\n${error.stack}`);
     }
 }, 20);
 

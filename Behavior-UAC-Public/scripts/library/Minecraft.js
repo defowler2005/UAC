@@ -1,5 +1,3 @@
-//import { clearTickInterval, clearTickTimeout, setTickInterval, setTickTimeout } from "./utils/scheduling.js";
-//export { clearTickInterval, clearTickTimeout, setTickInterval, setTickTimeout };
 import { compressNumber, formatNumber, MS, rainbowText } from "./utils/formatter.js";
 export { compressNumber, formatNumber, MS, rainbowText };
 import { Database } from "./build/classes/databaseBuilder.js";
@@ -9,6 +7,9 @@ import { Entity } from "./build/classes/entityBuilder.js";
 import { Player } from "./build/classes/playerBuilder.js";
 import { Command } from "./build/classes/commandBuilder.js";
 import { ServerBuilder } from "./build/classes/serverBuilder.js";
+import { configuration } from "./build/configurations.js";
+
+let worldLoaded = false;
 
 class ServerBuild extends ServerBuilder {
     constructor() {
@@ -34,51 +35,52 @@ class ServerBuild extends ServerBuilder {
                 if (!data.message.startsWith(this.command.prefix)) return;
                 const args = data.message.slice(this.command.prefix.length).split(/\s+/g);
                 const command = args.shift().toLowerCase();
-                const getCommand = Command.getAllRegistation().some(element => element.name === command || element.aliases && element.aliases.includes(command));
+                const getCommand = Command.getAllRegistation().some((element) => element.name === command || element.aliases && element.aliases.includes(command));
                 if (!getCommand) {
                     data.cancel = true;
-                    return sender.runCommandAsync(`tellraw "${data.sender.nameTag}" {"rawtext":[{"text":"§c"},{"translate":"commands.generic.unknown", "with": ["§f${command}§c"]}]}`);
+                    return sender.sendMessage({ "rawtext": [{ "text": "§c" }, { "translate": "commands.generic.unknown", "with": [`§f${command}§c`] }] });
                 };
 
-                Command.getAllRegistation().forEach(element => {
+                Command.getAllRegistation().forEach((element) => {
                     if (!data.message.startsWith(this.command.prefix) || element.name !== command)
                         return;
+                    if (element.staff === 'true' && !data.sender.hasTag(configuration.staff_tag)) {
+                        if (element?.cancelMessage) data.cancel = true;
+                        return data.sender.tellraw(`§¶§c§lUAC ► §c§lThis command is meant for staff only.`);
+                    }
+
                     /**
                      * Registration callback
                      */
-                    if (element?.cancelMessage)
-                        data.cancel = true;
+                    if (element?.cancelMessage) data.cancel = true;
                     try {
-                        element.callback(data, args);
+                        system.run(() => element.callback(data, args))
                     }
                     catch (error) {
                         this.runCommandAsync(`tellraw @a {"rawtext":[{"text":"§¶§c§lUAC JS Error ► §c${error}"}]}`);
-                    };
-                });
+                    }
+                })
             });
             let oldPlayer = [];
-            world.afterEvents.entitySpawn.subscribe(data => {
-                if (data.entity.id !== 'minecraft:player')
-                    return;
-                let playerSpawned = Player.list().filter(current => !oldPlayer.some(old => current === old));
+            world.afterEvents.entitySpawn.subscribe((data) => {
+                if (data.entity.id !== 'minecraft:player') return;
+                let playerSpawned = Player.list().filter((current) => !oldPlayer.some((old) => current === old));
 
                 if (playerSpawned.includes(data.entity.nameTag)) { };
             });
-            let worldLoaded = false, tickCount = 0;
-            system.runInterval((data) => {
-                if (!this.runCommandAsync('testfor @a').error && !worldLoaded) {
+            system.runInterval(() => {
+                if (world.getAllPlayers().length > 0) {
                     worldLoaded = true;
-                }
-                ;
+                };
             });
         } catch (error) {
             console.warn(error, error.stack);
         }
     }
-    ;
-}
-;
+};
+
 /**
  * Import this constructor
  */
 export const Server = new ServerBuild();
+export { worldLoaded };

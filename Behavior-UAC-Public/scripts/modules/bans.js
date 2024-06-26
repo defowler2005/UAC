@@ -1,10 +1,9 @@
 import { tellrawServer, TellRB } from 'library/utils/prototype.js';
 import { scoreTest, setScore } from '../library/utils/score_testing';
-import { world } from '@minecraft/server';
 
 function playerbans(player) {
     const name = player.getName();
-    let ban_reason = (`${player.getTags().find((tag) => tag.startsWith("reason_")).replace('reason_', '').replace('_', ' ')}`);
+    let ban_reason = (`${player.getTags().find((tag) => tag?.startsWith("reason_"))?.replace('reason_', '')?.replace('_', ' ')}`);
     try {
         if (player.hasTag('PermBan')) {
             TellRB(`ban`, `UAC SYSTEM ► ${name} was banned. REASON : UAC Global Banned`);
@@ -52,4 +51,4 @@ function playerbans(player) {
 }
 
 
-export { playerbans }
+export { playerbans };

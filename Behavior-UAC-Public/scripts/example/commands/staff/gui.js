@@ -2,11 +2,11 @@ import { Player, world, system } from '@minecraft/server';
 import { Database, Server } from '../../../library/Minecraft.js';
 import { ActionFormData, ModalFormData } from '@minecraft/server-ui';
 import { scoreTest, setScore } from '../../../library/utils/score_testing.js'
-import { tellrawStaff, getGamemode } from '../../../library/utils/prototype.js';
+import { tellrawStaff } from '../../../library/utils/prototype.js';
 const obj = {}
 
 const moduleRequires = ['has_xx', 'has_gt']
-const moduleDefs_prots = [
+export const moduleDefs_prots = [
     {
         mname: 'Anti-Fly',
         obj: ['afmtoggle', 'AFM'],
@@ -63,9 +63,9 @@ const moduleDefs_prots = [
         toggle: ['§cOFF', '§aON'],
         require: 'has_gt'
     }
-]
+];
 
-const moduleDefs_util = [
+export const moduleDefs_util = [
     {
         mname: 'AFK Kick',
         obj: ['afkm'],
@@ -111,7 +111,7 @@ const moduleDefs_util = [
     {
         mname: 'Death Toggle',
         obj: ['dethtoggle', 'Deathef'],
-        name: 'dethtoggledummy',
+        name: 'dethtoggle',
         toggle: ['§cOFF', '§aON'],
         require: 'has_xx'
     },
@@ -171,7 +171,8 @@ const moduleDefs_util = [
         toggle: ['§cOFF', '§aON'],
         require: 'has_gt'
     }
-]
+];
+
 const itembanDefs = [
     { mname: 'Harming Arrow', obj: 'BNA', name: 'BNAdummy' },
     { mname: 'Book and Quill', obj: 'BNBQ', name: 'BNBQdummy' },
@@ -202,7 +203,7 @@ const kitDefs = [
     { mname: 'U32kDiamond', structure: 'AdminUnbreakableDiamond32k' },
     { mname: 'Iron', structure: 'AdminIron' },
     { mname: 'ULegitIron', structure: 'AdminUnbreakableironlegit' },
-    { mname: 'U32kIron', structure: 'AdminUnbreakableiron32k' },
+    { mname: 'U32kIron', structure: 'AdminUnbreakableiron32k' }
 ];
 
 const particleDefs = [
@@ -213,23 +214,15 @@ const particleDefs = [
 ];
 
 /** @type { (plr: Player, module: typeof moduleDefs_prots[number], newValue?: number, newValue?: String) => void } */
-const setModule = (plr, module, newValue, defsType) => {
+const setModule = (plr, module, newValue) => {
     try {
-        if (defsType === 'normalDefs') {
-            const oldValue = Number(Database.get(module.name));
-            if (oldValue !== newValue) {
-                tellrawStaff(`§¶§cUAC STAFF ► §bPlayer §d${plr.name}§b has set the module §e${module.mname}§b to ${newValue ? '§aOn' : '§4Off'}`)
-                Database.set(`${module.name}`, newValue);
-            }
-        } else if (defsType === 'otherDefs') {
-            const oldValue = Number(Database.get(module.name));
-            if (oldValue !== newValue) {
-                tellrawStaff(`§¶§cUAC STAFF ► §bPlayer §d${plr.name}§b has set the module §e${module.mname}§b to ${newValue ? '§aOn' : '§4Off'}`)
-                Database.set(`${module.name}`, newValue);
-            }
-        }
+        const oldValue = Number(Database.get(module.name));
+        if (oldValue !== newValue) {
+            tellrawStaff(`§¶§cUAC STAFF ► §bPlayer §d${plr.name}§b has set the module §e${module.mname}§b to ${module.toggle[newValue]}`)
+            Database.set(module.name, newValue === null ? 0 : newValue);
+        };
     } catch (error) {
-        //console.warn(`An error occured while setting modules in GUI: ${error}\n${error.stack}`);
+        console.warn(`An error occured while setting modules in GUI: ${error}\n${error.stack}`);
     }
 };
 
@@ -318,7 +311,7 @@ const guiScheme = {
                 ['Server Stats', () => setScore(plr, 'hometp', 420, false)],
                 ['Off', () => setScore(plr, 'hometp', 3, false)],
                 ['back', () => guiScheme.NonStaff(plr)]
-            ]
+            ];
 
             const v = new ActionFormData()
                 .title(`Change Display Message`)
@@ -480,23 +473,16 @@ const guiScheme = {
         /** @type { (plr: Player, target: Player) => void } */
         stats: (plr, target) => {
             const v = new ActionFormData()
-                .title(`${target.name.replace(/§./g, '')}'s stats`)
+                .title(`${target.name.replace(/§./g, '')}'s stats`);
 
-            let text = []
+            let text = [];
 
             // location
-            text.push('§l§eLocation')
+            text.push('§l§eLocation');
             const plrFacing = obj('Player_Facing').players.get(target) // down up north south west east
             const plrCoord = ['X_Coordinate', 'Y_Coordinate', 'Z_Coordinate'].map(v => obj(v).players.get(target))
             const spawnCoord = ['X_Coord_S', 'Y_Coord_S', 'Z_Coord_S'].map(v => obj(v).players.get(target))
             const deathCoord = ['X_Coord_D', 'Y_Coord_D', 'Z_Coord_D'].map(v => obj(v).players.get(target))
-            const playerDim = (() => {
-                const in_nether = obj('in_nether').players.get(target)
-                const in_end = obj('in_end').players.get(target)
-                return in_nether ? 1 // 1: in nether
-                    : in_end ? 2 // 2: in end
-                        : 0 // overworld / unknoown
-            })()
 
             text.push(`Location: ${plrCoord.map(v => `§a${v}§r`).join(', ')}`)
             text.push(`SpawnLoc: ${spawnCoord.map(v => `§a${v}§r`).join(', ')}`)
@@ -509,11 +495,7 @@ const guiScheme = {
                                 : plrFacing == 5 ? 'EAST'
                                     : 'UNKNOWN'
                 }`);
-            text.push(`Dimension: §b${playerDim == 0 ? 'OVERWORLD'
-                : playerDim == 1 ? 'NETHER'
-                    : playerDim == 2 ? 'END'
-                        : 'UNKNOWN'
-                }`)
+            text.push(`Dimension: §b${target.dimension.toUpperCase()}`)
             text.push('') // newline
 
             // permissions
@@ -522,19 +504,13 @@ const guiScheme = {
             const isOwner = target.hasTag('ownerstatus')
             const mayFly = obj('2KK001').players.get(plr) == 725
             const isGodmode = target.hasTag('tgmGodMode')
-            const gamemode = getGamemode(target)
+            const gamemode = target.getGameMode();
 
             text.push(`Staff: ${isStaff ? '§aYes' : '§eNo'}`)
             text.push(`Owner: ${isOwner ? '§aYes' : '§eNo'}`)
             text.push(`Mayfly: ${mayFly ? '§aYes' : '§eNo'}`)
             text.push(`Godmode: ${isGodmode ? '§aYes' : '§eNo'}`)
-            text.push(`Gamemode: §b${gamemode == 'survival' ? 'Survival'
-                : gamemode == 'creative' ? 'Creative'
-                    : gamemode == 'adventure' ? 'Adventure'
-                        : gamemode == 'spectator' ? 'Spectator'
-                            : gamemode == 'hc' ? 'Hardcore'
-                                : 'Unknown'
-                }`)
+            text.push(`Gamemode: §b${gamemode.charAt(0).toUpperCase()}`)
             text.push('') // newline
 
             // detections
@@ -719,7 +695,7 @@ const guiScheme = {
                     ) + 'Type in the player name. Leave blank to cancel',
                     'Player name'
                 )
-                .dropdown('Or select a player:', ['§8None§r', ...pl.map(v => v.name)])
+                .dropdown('Or select a player:', ['§8None§r', ...pl.map(v => v.name)]);
 
             v.show(plr).then(v => {
                 /** @type {string} */
@@ -808,7 +784,7 @@ const guiScheme = {
 
             const newValues = result.formValues.map((v) => Number(v));
             for (let i = 0, m = newValues.length, b; (b = newValues[i], i < m); i++) {
-                setModule(plr, moduleDefs_util[i], b, 'normalDefs');
+                setModule(plr, moduleDefs_util[i], b);
             }; guiScheme.main(plr);
         });
     },
@@ -835,7 +811,7 @@ const guiScheme = {
             if (v.canceled) return guiScheme.main(plr)
             const newValues = v.formValues.map(v => Number(v))
             for (let i = 0, m = newValues.length, a, b; (a = values[i], b = newValues[i], i < m); i++) {
-                if (a != b) setModule(plr, moduleDefs_prots[i], b, 'otherDefs');
+                if (a != b) setModule(plr, moduleDefs_prots[i], b);
             }; guiScheme.main(plr);
         })
     },
@@ -984,7 +960,7 @@ const guiScheme = {
                         toggle: ['§cOFF', '§aON'],
                         require: 'has_xx'
                     }
-                    setModule(plr, module, status ? 0 : 1, 'otherDefs');
+                    setModule(plr, module, status ? 0 : 1);
                     return guiScheme.worldborder(plr)
                 }
                 case 2: return guiScheme.main(plr)

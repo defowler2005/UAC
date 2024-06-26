@@ -2,9 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "../../development_resource_packs/Resource-UAC-Public"
 		}
 	],
 	"settings": {}
