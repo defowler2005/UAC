@@ -47,7 +47,7 @@
             {
                 "titleText": {
                     "type": "label",
-                    "text": "§¶§c§lUAC ► §bUnity Anti-Cheat",
+                    "text": "uac.mainlabel",
                     "anchor_from": "center",
                     "anchor_to": "center",
                     "size": [
