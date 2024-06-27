@@ -10,7 +10,8 @@
         "scripts/example/commands/staff/gui.js",
         "scripts/example/index.js",
         "scripts/example/commands/staff/modulecheck.js",
-        "scripts/example/commands/staff/vanish.js"
+        "scripts/example/commands/staff/vanish.js",
+        "scripts/modules/bad_packet.js"
     ],
     "fixing_files_in_progress": [
         "scripts/modules/hotbar_message.js"
@@ -30,6 +31,7 @@
         "fixed_files[1] Modified to use dynamic properties",
         "Make JS interpreter for scoreboard to Dynamic properties",
         "Anti-combat log fully functional",
-        "Some hotbar functionallity does not work yet"
+        "Some hotbar functionallity does not work yet",
+        "bad_packet.js may be slightly glitchy"
     ]
 }

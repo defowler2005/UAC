@@ -1,6 +1,7 @@
 import { Entity } from '../build/classes/entityBuilder.js';
 import { Player } from '../build/classes/playerBuilder.js';
 import { compressNumber, formatNumber } from '../utils/formatter.js';
+
 /**
  * Display a leaderboard on floating text of the top players on scoreboard(s). For this leaderboard to display highest ranking players, the players must join the game while this function is running.
  * @param {number} x The x position of your floating text entity

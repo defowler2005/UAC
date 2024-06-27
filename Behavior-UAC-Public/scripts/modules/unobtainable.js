@@ -1,9 +1,10 @@
 import { scoreTest } from '../library/utils/score_testing';
 import maxItemStack, { defaultMaxItemStack } from 'library/utils/maxstack.js';
 import { world } from '@minecraft/server';
-import { tellrawServer, tellrawStaff, TellRB } from '../library/utils/prototype';
+import { tellrawServer, tellrawStaff } from '../library/utils/prototype';
 import { Database } from '../library/Minecraft';
 import { configuration } from '../library/build/configurations';
+import { TellRB } from '../library/utils/prototype.js';
 
 const unobtainables = [
     'minecraft:pumpkin_stem',

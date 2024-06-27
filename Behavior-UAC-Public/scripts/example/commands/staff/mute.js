@@ -1,7 +1,7 @@
 import { world } from '@minecraft/server';
 import { Server } from '../../../library/Minecraft.js';
-import { tellrawServer, TellRB } from '../../../library/utils/prototype.js';
-
+import { tellrawServer } from '../../../library/utils/prototype.js';
+import { TellRB } from '../../../library/utils/prototype.js';
 const registerInformation = {
     cancelMessage: true,
     name: 'mute',

@@ -1,5 +1,6 @@
 import { Server } from '../../../library/Minecraft.js';
-import { tellrawStaff, TellRB } from '../../../library/utils/prototype.js';
+import { tellrawStaff } from '../../../library/utils/prototype.js';
+import { TellRB } from '../../../library/utils/prototype.js';
 import { world } from '@minecraft/server';
 const registerInformation = {
     cancelMessage: true,

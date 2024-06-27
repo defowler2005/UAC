@@ -1,7 +1,7 @@
 {
 	"format_version": 2,
 	"header": {
-		"name": "§7⋰ §bUnity Anticheat §7[§22§7.§28§7.§29§7] §2Public §7⋱", 
+		"name": "§7⋰ §bUnity Anticheat §7[§22§7.§28§7.§29§7] §2Public §7⋱",
 		"description": "§eRequires Experimental Beta-API \n§bMade By §2NightwalkerLots & FrostIce482",
 		"uuid": "b77d3dc3-7a77-4bb0-a43c-cd6726334308",
 		"version": [
@@ -47,6 +47,12 @@
 			"module_name": "@minecraft/server-ui",
 			"version": "1.2.0-beta"
 		},
+		/*
+		{
+			"module_name": "@minecraft/server-net",
+			"version": "1.0.0-beta"
+		},
+		*/
 		{
 			"module_name": "@minecraft/server-gametest",
 			"version": "1.0.0-beta"

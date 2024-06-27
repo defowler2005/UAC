@@ -8,20 +8,21 @@ import { ops } from '../modules/oneplayersleep.js';
 import { lagclear } from '../modules/lagclear.js';
 import { movement_check } from '../modules/movement.js';
 import { lockdown } from '../modules/lockdown.js';
-import { waitMove } from './commands/staff/gui.js';
 import { hotbar_message } from '../modules/hotbar_message.js';
 import { op_abuse } from '../modules/opabuse.js';
 import { afk_kick } from '../modules/afk_kick.js';
 import { Check_Packet_Behavior } from '../modules/bad_packet.js';
 
 //game resource dependancies
-import { world as World, BlockTypes, system } from "@minecraft/server";
-import { tellrawStaff, tp, tellrawServer, TellRB, hotbar } from '../library/utils/prototype.js';
+import { world as World, system } from "@minecraft/server";
+import { tellrawStaff, tp, tellrawServer, hotbar, TellRB, waitMove } from '../library/utils/prototype.js';
 import { scoreTest, setScore } from '../library/utils/score_testing.js';
 import { world, Player } from '@minecraft/server';
-import { Database, Server, worldLoaded } from '../library/Minecraft.js';
+import { Database, Server } from '../library/Minecraft.js';
 import { configuration } from '../library/build/configurations.js';
 import { opCheck } from '../modules/OpCheck.js';
+import { guiScheme } from './commands/staff/gui.js';
+import { displayRank } from '../library/miscellaneous/chatrank.js';
 
 const overworld = world.getDimension('overworld');
 
@@ -50,157 +51,171 @@ function antiCrash(player) {
 let on_tick = 0;
 
 system.runInterval(() => {
-    if (worldLoaded) {
-        try {
-            let SpawnX = Database.get('Spawn_Coord_X') || 0;
-            let SpawnY = Database.get('Spawn_Coord_Y') || 90;
-            let SpawnZ = Database.get('Spawn_Coord_Z') || 0;
-            let BorderX = Database.get('Border_Coord_X') || 60;
-            let BorderZ = Database.get('Border_Coord_Z') || 60;
-            let WorldBorderbool = Database.get('wbmtoggle');
-            let uoimbool = Database.get('uoimtoggle');
-            let opsbool = Database.get('opstoggle');
-            let lagclear_bool = Database.get('ltmtoggle');
-            let opabuse_bool = Database.get('opamtoggle');
-            on_tick++;
+    try {
+        let SpawnX = Database.get('Spawn_Coord_X') || 0;
+        let SpawnY = Database.get('Spawn_Coord_Y') || 90;
+        let SpawnZ = Database.get('Spawn_Coord_Z') || 0;
+        let BorderX = Database.get('Border_Coord_X') || 60;
+        let BorderZ = Database.get('Border_Coord_Z') || 60;
+        let WorldBorderbool = Database.get('wbmtoggle');
+        let uoimbool = Database.get('uoimtoggle');
+        let opsbool = Database.get('opstoggle');
+        let lagclear_bool = Database.get('ltmtoggle');
+        let opabuse_bool = Database.get('opamtoggle');
+        on_tick++;
 
-            if (uoimbool == 1) { unobtainable(); }
+        if (uoimbool == 1) { unobtainable(); };
 
-            if (on_tick == 10) {
-                if (opsbool) { ops(); }
-                if (lagclear_bool == 1) lagclear();
+        if (on_tick == 1) {
+            let players = world.getPlayers();
+            for (let player of players) {
+                setScore(player, 'lastpos_y', Math.abs(Math.floor(player.location.y)));
+                setScore(player, 'lastpos_x', Math.abs(Math.floor(player.location.x)));
+                setScore(player, 'lastpos_z', Math.abs(Math.floor(player.location.z)));
             }
+        }
 
-            if (on_tick == 15) {
-                const entitycount = Database.get('entitycount');
-                if (entitycount >= 340) {
-                    overworld.runCommandAsync(`function UAC/packages/autoclear-manual`);
-                    tellrawServer(`§¶§cUAC §¶§b► §cEmergency Lag Clear §bwas performed due to entity count going over §6340§b.`);
-                    TellRB(`flag_0`, `UAC SYSTEM ► Emergency Lag Clear triggered due to entity count going over 340`);
-                }
-            }
-
-            // one second module functions -- 2nd schedual  -- ran from backend not players
-            if (on_tick >= 20) {
-                let players = world.getPlayers();
-                for (let player of players) {
-                    const name = player.getName();
-                    antiCrash(player);
-                    if (Database.get('unban') === 0) {
-                        playerbans(player);
-                    }
-                    lockdown(player)
-                    hotbar_message(player);
-                    opCheck(player);
-                    movement_check(player);
-                    afk_kick(player);
-                    if (opabuse_bool) { op_abuse(player) };
-                    setScore(player, "has_gt", 1, false);
-
-                    //Ticking for the removal of tp_cooldown for home command every 1 second.
-                    const oldTp_cooldown = scoreTest(player, 'tp_cooldown');
-                    if (oldTp_cooldown >= 1) {
-                        setScore(player, 'tp_cooldown', oldTp_cooldown - 1);
-                    }
-
-                    //Ticking for the removal of combat_timer for every 1 second.
-                    const oldCombat_timer = scoreTest(player, 'combat_timer');
-                    if (oldCombat_timer >= 1) {
-                        setScore(player, 'combat_timer', oldCombat_timer - 1);
-                       if (oldCombat_timer === 10) { // 10 seconds.
-                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §c❚❚❚❚❚❚❚❚❚❚');
-                        }
-
-                        else if (oldCombat_timer === 9) { // 9 seconds.
-                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚§c❚❚❚❚❚❚❚❚❚');
-                        }
-
-                        else if (oldCombat_timer === 8) { // 8 seconds.
-                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚§c❚❚❚❚❚❚❚❚');
-                        }
-
-                        else if (oldCombat_timer === 7) { // 7 seconds.
-                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚§c❚❚❚❚❚❚❚');
-                        }
-
-                        else if (oldCombat_timer === 6) { // 6 seconds.
-                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚§c❚❚❚❚❚❚');
-                        }
-
-                        else if (oldCombat_timer === 5) { // 5 seconds.
-                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚§c❚❚❚❚❚');
-                        }
-
-                        else if (oldCombat_timer === 4) { // 4 seconds.
-                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚§c❚❚❚❚');
-                        }
-
-                        else if (oldCombat_timer === 3) { // 3 seconds.
-                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚§c❚❚❚');
-                        }
-
-                        else if (oldCombat_timer === 2) { // 2 seconds.
-                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚§c❚❚');
-                        }
-
-                        else if (oldCombat_timer === 1) { // 1 seconds.
-                            hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚❚§c❚');
-                        };
-                        // oldCombat_timer for some reason doesn't reach 0 so used this instead for now.
-                        system.runTimeout(() => { hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚❚❚\n        §dNO LONGER IN COMBAT'); }, 200);
-                    };
-
-                    //world border Custom Spawn TP
-                    if (WorldBorderbool) {
-                        const x = Math.floor(player.location.x);
-                        const z = Math.floor(player.location.z);
-                        if (player.hasTag(configuration.staff_tag) === false) {
-                            if (Math.abs(x - (-BorderX + BorderZ) / 2) > Math.abs(-BorderX - BorderZ) / 2 || Math.abs(z - (-BorderZ + BorderZ) / 2) > Math.abs(-BorderZ - BorderZ) / 2) {
-                                tp(player, SpawnX, SpawnY, SpawnZ);
-                                tellrawServer(`§¶§cUAC §¶§b► §d${player.getName()} §btried passing world border`);
-                                TellRB(`flag_0`, `UAC ► ${player.getName()} tried to pass the world border`);
-                            }
-                        }
-                    };
-
-                    //Is_On_Ground.
-                    if (player.isOnGround) {
-                        player.addTag('Is_On_Ground');
-                    } else {
-                        player.removeTag('Is_On_Ground');
-                    };
-
-                    //Entity counter.
-                    const allEntities = world.getDimension('overworld').getEntities({ excludeTypes: ['minecraft:player'] });
-                    Database.set('entitycount', allEntities.length);
-
-                    //Player counter.
-                    const allPlayers = world.getAllPlayers();
-                    Database.set('playercount', allPlayers.length);
-
-                    //Namespoof patch provided by the Paradox Team.
-                    let char_length = player.nameTag;
-                    for (let i = 0; i < char_length.length; i++) {
-                        if (char_length.charCodeAt(i) > 255) {
-                            console.warn(`Illegal bytes outside the UTF-8 range`);
-                            tellrawStaff(`§¶§cUAC STAFF STAFF ► §6Anti-NameSpoof §bBypass was prevented from §d${name}`);
-                            TellRB(`flag_1`, `UAC SYSTEM ► ${name} was kicked for namespoofing`);
-                            try { player.runCommandAsync(`kick "${player.nameTag}" §r\n§l§c\n§r\n§eKicked By:§r §l§3§•Unity Anti•Cheat§r\n§bReason:§r §c§lInvalid GamerTag`); }
-                            catch { player.runCommandAsync(`event entity @s uac:ban_main`); }
-                        }; //console.warn(`Everything appears normal`);
-                    }
-                }; on_tick = 0;
-            }
-            for (let player of world.getPlayers()) {
+        if (on_tick == 2) {
+            let players = world.getPlayers();
+            for (let player of players) {
                 Check_Packet_Behavior(player);
-                if (scoreTest(player, 'fzplr') == 1) {
-                    tp(player, scoreTest(player, 'lastpos_x'), scoreTest(player, 'lastpos_y'), scoreTest(player, 'lastpos_z'));
-                }
             }
-        } catch (e) {
-            console.warn(JSON.stringify(e.stack), e)
-        }; //console.error('Players loaded!');
-    }// else console.error('Players not loaded yet!');
+        }
+
+
+        if (on_tick == 10) {
+            if (opsbool) { ops(); }
+            if (lagclear_bool == 1) lagclear();
+        }
+
+        if (on_tick == 15) {
+            const entitycount = Database.get('entitycount');
+            if (entitycount >= 340) {
+                overworld.runCommandAsync(`function UAC/packages/autoclear-manual`);
+                tellrawServer(`§¶§cUAC §¶§b► §cEmergency Lag Clear §bwas performed due to entity count going over §6340§b.`);
+                TellRB(`flag_0`, `UAC SYSTEM ► Emergency Lag Clear triggered due to entity count going over 340`);
+            }
+        }
+
+        // one second module functions -- 2nd schedual  -- ran from backend not players
+        if (on_tick >= 20) {
+            let players = world.getPlayers();
+            for (let player of players) {
+                const name = player.getName();
+                antiCrash(player);
+                if (Database.get('unban') === 0) {
+                    playerbans(player);
+                }
+                lockdown(player)
+                hotbar_message(player);
+                opCheck(player);
+                movement_check(player);
+                afk_kick(player);
+                if (opabuse_bool) { op_abuse(player) };
+                setScore(player, "has_gt", 1, false);
+
+                //Ticking for the removal of tp_cooldown for home command every 1 second.
+                const oldTp_cooldown = scoreTest(player, 'tp_cooldown');
+                if (oldTp_cooldown >= 1) {
+                    setScore(player, 'tp_cooldown', oldTp_cooldown - 1);
+                }
+
+                //Ticking for the removal of combat_timer for every 1 second.
+                const oldCombat_timer = scoreTest(player, 'combat_timer');
+                setScore(player, 'combat_timer', oldCombat_timer - 1);
+                if (oldCombat_timer === 10) { // 10 seconds.
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §c❚❚❚❚❚❚❚❚❚❚');
+                }
+
+                else if (oldCombat_timer === 9) { // 9 seconds.
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚§c❚❚❚❚❚❚❚❚❚');
+                }
+
+                else if (oldCombat_timer === 8) { // 8 seconds.
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚§c❚❚❚❚❚❚❚❚');
+                }
+
+                else if (oldCombat_timer === 7) { // 7 seconds.
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚§c❚❚❚❚❚❚❚');
+                }
+
+                else if (oldCombat_timer === 6) { // 6 seconds.
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚§c❚❚❚❚❚❚');
+                }
+
+                else if (oldCombat_timer === 5) { // 5 seconds.
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚§c❚❚❚❚❚');
+                }
+
+                else if (oldCombat_timer === 4) { // 4 seconds.
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚§c❚❚❚❚');
+                }
+
+                else if (oldCombat_timer === 3) { // 3 seconds.
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚§c❚❚❚');
+                }
+
+                else if (oldCombat_timer === 2) { // 2 seconds.
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚§c❚❚');
+                }
+
+                else if (oldCombat_timer === 1) { // 1 seconds.
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚❚§c❚');
+                }
+                else if (oldCombat_timer === 0) {
+                    hotbar(player, '§¶§dCOMBAT LOG TIMER§7: §2❚❚❚❚❚❚❚❚❚❚\n        §dNO LONGER IN COMBAT');
+                };
+
+                //world border Custom Spawn TP
+                if (WorldBorderbool) {
+                    const x = Math.floor(player.location.x);
+                    const z = Math.floor(player.location.z);
+                    if (player.hasTag(configuration.staff_tag) === false) {
+                        if (Math.abs(x - (-BorderX + BorderZ) / 2) > Math.abs(-BorderX - BorderZ) / 2 || Math.abs(z - (-BorderZ + BorderZ) / 2) > Math.abs(-BorderZ - BorderZ) / 2) {
+                            tp(player, SpawnX, SpawnY, SpawnZ);
+                            tellrawServer(`§¶§cUAC §¶§b► §d${player.getName()} §btried passing world border`);
+                            TellRB(`flag_0`, `UAC ► ${player.getName()} tried to pass the world border`);
+                        }
+                    }
+                };
+
+                //Is_On_Ground.
+                if (player.isOnGround) {
+                    player.addTag('Is_On_Ground');
+                } else {
+                    player.removeTag('Is_On_Ground');
+                };
+
+                //Entity counter.
+                const allEntities = world.getDimension('overworld').getEntities({ excludeTypes: ['minecraft:player'] });
+                Database.set('entitycount', allEntities.length);
+
+                //Player counter.
+                const allPlayers = world.getAllPlayers();
+                Database.set('playercount', allPlayers.length);
+
+                //Namespoof patch provided by the Paradox Team.
+                let char_length = player.nameTag;
+                for (let i = 0; i < char_length.length; i++) {
+                    if (char_length.charCodeAt(i) > 255) {
+                        console.warn(`Illegal bytes outside the UTF-8 range`);
+                        tellrawStaff(`§¶§cUAC STAFF STAFF ► §6Anti-NameSpoof §bBypass was prevented from §d${name}`);
+                        TellRB(`flag_1`, `UAC SYSTEM ► ${name} was kicked for namespoofing`);
+                        try { player.runCommandAsync(`kick "${player.nameTag}" §r\n§l§c\n§r\n§eKicked By:§r §l§3§•Unity Anti•Cheat§r\n§bReason:§r §c§lInvalid GamerTag`); }
+                        catch { player.runCommandAsync(`event entity @s uac:ban_main`); }
+                    }; //console.warn(`Everything appears normal`);
+                }
+            }; on_tick = 0;
+        }
+        for (let player of world.getPlayers()) {
+            Check_Packet_Behavior(player);
+            if (player.hasTag('fzplr')) {
+                tp(player, scoreTest(player, 'lastpos_x'), scoreTest(player, 'lastpos_y'), scoreTest(player, 'lastpos_z'));
+            }
+        }
+    } catch (e) {
+        console.warn(JSON.stringify(e.stack), e)
+    };
 });
 
 const unobtainables = {
@@ -255,8 +270,8 @@ World.beforeEvents.playerPlaceBlock.subscribe(({ block, player }) => {
         TellRB(`flag_1`, `UAC Unobtainable Items ► ${player.nameTag} tried to place ${block.type.id.replace('minecraft:', '')} at ${x} ${y} ${z}`);
         tellrawStaff(`§l§¶§cUAC STAFF ► §6Unobtainable Items §bBlock Placement Flag \nBlock Type §7: §c${block.type.id.replace('minecraft:', '')} §bBlock Placer §7: §c${player.nameTag} §bLocation §7: §c${x} ${y} ${z}`);
         let type = block.type.id.replace('minecraft:', '');
-        if (player.hasTag(`staffstatus`)) { return };
-        block.setType(BlockTypes.air);
+        if (player.hasTag(`staffstatus`)) return;
+        block.setType('air');
         player.runCommandAsync(`function UAC/asset/illegalitemwarn`);
         tellrawServer(`§¶§c§lUAC ► §6Unobtainable Items §d${player.nameTag} §bwas temp-kicked for having §c${type}`);
         player.runCommandAsync(`clear @s`);
@@ -285,9 +300,15 @@ world.afterEvents.playerSpawn.subscribe((data) => {
     let player = data.player;
     let name = player.nameTag;
     let { x, y, z } = player.location;
-
-    if (scoreTest(player, 'seen_gui') == 0) {
-        waitMove.set(player, [x, y, z]);
+    if (player.hasTag('seen_gui') === false) {
+        waitMove(player, { x, y, z }, () => {
+            try {
+                guiScheme.player_welcome(player);
+                return;
+            } catch (error) {
+                console.warn(`${error}\n${error.stack}`);
+            }
+        })
     }
     if (Database.get('unban') === 1) {
         playerbans(player);
@@ -350,7 +371,7 @@ world.afterEvents.entityDie.subscribe((data) => {
 //In combat handling.
 world.afterEvents.entityHurt.subscribe((data) => {
     try {
-        if (!data.damageSource.damagingEntity) return;
+        if (data.damageSource.damagingEntity?.typeId !== 'minecraft:player') return;
         const hurtEntity = data.hurtEntity;
         const damagingEntity = data.damageSource.damagingEntity;
         setScore(hurtEntity, 'combat_timer', 10);

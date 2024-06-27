@@ -5,7 +5,7 @@ import { world } from '@minecraft/server';
  * @class
  */
 
-export class databaseBuilder {
+class databaseBuilder {
     /**
      * Constructs a new databaseBuilder instance.
      * @constructor

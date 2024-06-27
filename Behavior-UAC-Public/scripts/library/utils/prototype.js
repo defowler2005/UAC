@@ -1,5 +1,11 @@
-import { world, Player, GameMode } from '@minecraft/server';
-import { scoreTest } from './score_testing';
+import { world, Player, system } from '@minecraft/server';
+/*
+* If you are not using a server comment out these
+export { TellRB };
+import { TellRB } from './tell_rb.js';
+*/
+
+export function TellRB(a, b) { };
 
 export const content = {
     warn: function (message) {
@@ -56,43 +62,8 @@ export function tellrawStaff(message) {
             }
         }
     } catch { }
-}
-export function TellRB(color, message) {
-    try {
-        if (scoreTest(`rbflagdummy`, `acstoggle`) != 1) { return; } //check to see if RB Relay is enabled
-        if (!color) {
-            color = `1317f2`; //default color if color is not defined
-        }
-        switch (color) {
-            case 'ban': { color = `FB0000`; } break; //red
-            case 'flag_0': { color = `02EBFE`; } break; // cyan
-            case 'flag_1': { color = `E7FE02`; } break; //yellow
-        }
-        for (let player of world.getPlayers()) {
-            if (player.hasTag(`rb1337`)) {
-                player.onScreenDisplay.updateSubtitle("RB1337: " + JSON.stringify({
-                    url: 'https://discord.gg/uac',
-                    author: {
-                        name: 'UAC Discord Flag Log',
-                        icon_url: 'https://cdn.discordapp.com/attachments/824151082791075860/1081761748387893328/Discord_Certified_Moderator.png',
-                        url: 'https://discord.gg/uac'
-                    },
-                    description: `${message.replaceAll('"', '\\"')}`,
-                    anticheat: `Unity Anti-Cheat`,
-                    color: `${color}`,
-                    thumbnail: 'https://cdn.discordapp.com/attachments/824151082791075860/874429993164345354/uac_glitch.gif',
-                    footer: {
-                        icon_url: "https://cdn.discordapp.com/attachments/824151082791075860/874492420694360124/Unity_AntiCheat.png",
-                        text: "Powered by U-E Studios",
-                        url: 'https://discord.gg/uac'
-                    },
-                }))
-            }
-        }
-        console.warn(color.toString());
-    }
-    catch (c) { console.warn(JSON.stringify(e.stack), e) }
-}
+};
+
 export function tp(target, x, y, z) {
     try {
         target.teleport({ x: x, y: y, z: z }, target.dimension);
@@ -100,6 +71,26 @@ export function tp(target, x, y, z) {
         console.warn(JSON.stringify(e.stack), e)
 
     }
+};
+
+/**
+ * Waits for the player to move and then executes a callback function.
+ * @param {Object} target - The target player to monitor for movement.
+ * @param {number} x - The initial X-coordinate of the target player.
+ * @param {number} y - The initial Y-coordinate of the target player.
+ * @param {number} z - The initial Z-coordinate of the target player.
+ * @param {Function} callback - The callback function to execute after the player moves.
+ */
+
+export function waitMove(target, { x, y, z, }, callback) {
+    const t = new Map();
+    t.set(target, [x, y, z]);
+    system.runInterval(() => {
+        for (const [target, [xOld, yOld, zOld]] of t) {
+            const { x: xc, y: yc, z: zc } = target.location;
+            if (xOld !== xc || yOld !== yc || zOld !== zc) system.run(() => t.delete(target) || callback());
+        }
+    })
 };
 
 export function tellrawServer(message) {
@@ -124,7 +115,8 @@ export function tellraw(message) {
         return this.sendMessage(`${message.replaceAll('"', '\\"')}`);
     }
     catch { return }
-}
+};
+
 /**
  * 
  * @param {Player} player 
@@ -135,11 +127,11 @@ export function hotbar(player, message) {
     try {
         return player.onScreenDisplay.setActionBar(`${message.replaceAll('"', '\\"')}`);
     }
-    catch { return }
+    catch { return };
 };
 
 // return gamemode string.
-export function getGamemode(player, GM) { //Redundant function...
+export function getGamemode(player, GM) { //Redundant function, Used somewhere, To be removed later.
     try {
         return world.getPlayers({ name: player.name, gameMode: GM }).length > 0;
     } catch {

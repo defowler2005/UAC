@@ -2,11 +2,26 @@ import { Player, world, system } from '@minecraft/server';
 import { Database, Server } from '../../../library/Minecraft.js';
 import { ActionFormData, ModalFormData } from '@minecraft/server-ui';
 import { scoreTest, setScore } from '../../../library/utils/score_testing.js'
-import { tellrawStaff } from '../../../library/utils/prototype.js';
+import { tellrawStaff, waitMove } from '../../../library/utils/prototype.js';
+import { configuration } from '../../../library/build/configurations.js';
 const obj = {};
 
 const moduleRequires = ['has_xx', 'has_gt']
 export const moduleDefs_prots = [
+    {
+        mname: 'Fake Staff Protection',
+        obj: ['fsp', 'fsp'],
+        name: 'fsptoggle',
+        toggle: ['§cOFF', '§aON'],
+        require: 'has_xx'
+    },
+    {
+        mname: 'Lockdown Mode',
+        obj: ['ldtoggle', 'LD'],
+        name: 'ldtoggle',
+        toggle: ['§cOFF', '§aON'],
+        require: 'has_xx'
+    },
     {
         mname: 'Anti-Fly',
         obj: ['afmtoggle', 'AFM'],
@@ -104,7 +119,7 @@ export const moduleDefs_util = [
     {
         mname: 'Chat Ranks',
         obj: ['chatrank', 'chatrank'],
-        name: 'crdummy',
+        name: 'crdtoggle',
         toggle: ['§cOFF', '§aON'],
         require: 'has_gt'
     },
@@ -219,14 +234,14 @@ const setModule = (plr, module, newValue) => {
         const oldValue = Number(Database.get(module.name));
         if (oldValue !== newValue) {
             tellrawStaff(`§¶§cUAC STAFF ► §bPlayer §d${plr.name}§b has set the module §e${module.mname}§b to ${module.toggle[newValue]}`)
-            Database.set(module.name, newValue === null ? 0 : newValue);
+            Database.set(module.name, newValue);
         };
     } catch (error) {
         console.warn(`An error occured while setting modules in GUI: ${error}\n${error.stack}`);
     }
 };
 
-const guiScheme = {
+export const guiScheme = {
     /** @type { (plr: Player) => void } */
     main: (() => { // main UI
         /** @type { [name: string, fn: (plr: Player) => void][] } */
@@ -289,7 +304,7 @@ const guiScheme = {
         text.push(`§bJoin the UAC discord for updates`)
         text.push(`§6${configuration.discord_server}`)
         text.push('§l') //space
-        text.push('§6This Discord server is not operated by §dNightwalkerLots but rather by defowler2005, who enjoys programming, and likes UAC ')
+        text.push('§6This Discord server is not operated by §dNightwalkerLots §6but rather by §ddefowler2005.')
         text.push('§l') //space
         v.body(text.join('\n§r'))
         const welcome = [
@@ -318,7 +333,7 @@ const guiScheme = {
             const v = new ActionFormData()
                 .title(`Change Display Message`)
 
-            for (let [name, f] of actionList) v.button(name);
+            for (let [name] of actionList) v.button(name);
 
 
             v.show(plr).then(v => {
@@ -332,14 +347,13 @@ const guiScheme = {
             const y = scoreTest(plr, 'Y_Coord_D');
             const z = scoreTest(plr, 'Z_Coord_D');
 
-            plr.sendMessage(`§¶§cUAC ► §¶§d${plr.getName()} §b Death Coords: §g${x ?? 'unknown'}/${y ?? 'unknown'}/${z ?? 'unknown'}`);
+            plr.sendMessage(`§¶§cUAC ► §¶§d${plr.getName()} §bDeath Coords: §g${x ?? 'unknown'}/${y ?? 'unknown'}/${z ?? 'unknown'}`);
         },
         welcome_accept: (plr) => {
-            setScore(plr, 'seen_gui', 1, false)
+            plr.addTag('seen_gui');
         },
         spawntp: (plr) => {
             let name = plr.getName();
-
 
             if (scoreTest(plr, 'tp_cooldown') >= 1) return plr.tellraw(`§¶§cUAC ► §6TPA §cunavailable §bwhile warp commands are in cooldown. Please wait 40 seconds.`)
             if (scoreTest(plr, 'worldcustom') === 1) {
@@ -348,8 +362,7 @@ const guiScheme = {
                 tellrawStaff(`§¶§cUAC STAFF ► §d${name} §bwarped to worldspawn`);
                 plr.runCommandAsync(`function particle/nether_poof`);
                 setScore(plr, 'tp_cooldown', 900, false);
-            }
-            else {
+            } else {
                 plr.runCommandAsync(`tp @s 0 100 0`)
                 plr.runCommandAsync(`effect @s slow_falling 35 1 `);
                 tellrawStaff(`§¶§cUAC STAFF ► §d${name} §bwarped to worldspawn`);
@@ -539,8 +552,8 @@ const guiScheme = {
                     ['coal_ore', 'Coal']
                 ];
                 for (const [id, name] of ores_mined) {
-                text.push('§l§eOres Mined');
-                text.push(`${name}: §e${scoreTest(target, id)}§r`);
+                    text.push('§l§eOres Mined');
+                    text.push(`${name}: §e${scoreTest(target, id)}§r`);
                 }
             };
 
@@ -1019,7 +1032,6 @@ const guiScheme = {
             Database.set('Spawn_Coord_Y', newValueY);
             Database.set('Spawn_Coord_Z', newValueZ);
             tellrawStaff(`§¶§cUAC STAFF ► §bPlayer §d${plr.name}§b has set the world spawn coordinates size to X: Current coordinates: §4X: ${currentX}§r / §9Y: ${currentY}§r / §aZ: ${currentZ}§r`);
-
             guiScheme.spawnCoord(plr)
         })
     })()
@@ -1036,40 +1048,21 @@ const registerInformation = {
     ]
 };
 
-/** @type { Map<Player, [x:number,y:number,z:number]> } */
-const waitMove = new Map();
-
 Server.command.register(registerInformation, (chatmsg) => {
     const { sender } = chatmsg, { location: { x, y, z } } = sender;
-    if (Database.get('icmtoggle') !== 1 && !sender.hasTag('staffstatus')) return sender.tellraw(`§¶§cUAC ► §c§lThe Realm Owner currently has Player Commands Disabled`);
-
-    sender.tellraw(`§aMove to show the UI.`)
-    waitMove.set(chatmsg.sender, [x, y, z])
-});
-
-system.runInterval(() => {
-    for (let [plr, [x, y, z]] of waitMove) {
+    waitMove(sender, { x, y, z }, () => {
         try {
-            let { x: xc, y: yc, z: zc } = plr.location
-            if (x != xc || y != yc || z != zc) {
-                if (scoreTest(plr, 'seen_gui') == 0) {
-                    guiScheme.player_welcome(plr)
-                    waitMove.delete(plr)
-                    return;
-                }
-                if (plr.hasTag('staffstatus')) {
-                    guiScheme.main(plr)
-                    waitMove.delete(plr)
-                } else {
-                    guiScheme.NonStaff(plr)
-                    waitMove.delete(plr)
-                }
+            if (plr.hasTag('seen_gui') === false) {
+                guiScheme.player_welcome(sender)
+                return;
             }
-        } catch (e) {
-            console.warn(e instanceof Error ? `${e}\n${e.stack}` : e)
-            waitMove.delete(plr)
+            if (plr.hasTag('staffstatus')) {
+                guiScheme.main(plr)
+            } else {
+                guiScheme.NonStaff(plr)
+            }
+        } catch (error) {
+            console.warn(`${error}\n${error.stack}`)
         }
-    }
+    }); sender.tellraw(`§aMove to show the UI.`)
 });
-
-export { waitMove };

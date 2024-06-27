@@ -1,6 +1,7 @@
 import { Dimension, world } from '@minecraft/server';
 import { Database, Server } from '../../../library/Minecraft.js';
-import { tellrawStaff, TellRB } from '../../../library/utils/prototype.js';
+import { tellrawStaff } from '../../../library/utils/prototype.js';
+import { TellRB } from '../../../library/utils/prototype.js';
  //Ignore the outdated functions.
 const registerInformation = {
     cancelMessage: true,
@@ -14,14 +15,10 @@ const registerInformation = {
     ]
 };
 
-if (!Database.get('fixedContainer')) Database.set('fixedContainer', 0);
-
 let toggle = Database.get('fixedContainer');
 
 Server.command.register(registerInformation, (chatmsg, args) => {
     const { sender } = chatmsg;
-
-    if (!sender.hasTag('staffstatus')) return sender.tellraw(`§¶§cUAC ► §c§lError 4: Only Staff can use this command`)
 
     switch (args[0]) {
         case undefined:

@@ -23,8 +23,8 @@ export class ServerBuilder {
      * @returns {runCommandReturn}
      * @example ServerBuilder.broadcast('Hello World!');
      */
-    broadcast(text, player) {
-        return this.runCommandAsync(`tellraw ${(player) ? `"${player}"` : '@a'} {"rawtext":[{"text":"${(typeof text === 'object') ? JSON.stringify(text) : text}"}]}`);
+    broadcast(text) {
+        return world.sendMessage(`${text}`);
     }
     ;
     broadcastStaff(text, player) {

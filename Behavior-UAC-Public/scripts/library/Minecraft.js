@@ -8,6 +8,7 @@ import { Player } from "./build/classes/playerBuilder.js";
 import { Command } from "./build/classes/commandBuilder.js";
 import { ServerBuilder } from "./build/classes/serverBuilder.js";
 import { configuration } from "./build/configurations.js";
+import { displayRank } from "./miscellaneous/chatrank.js";
 
 let worldLoaded = false;
 
@@ -29,6 +30,8 @@ class ServerBuild extends ServerBuilder {
                  * Emit to 'beforeMessage' event listener
                  */
                 const sender = data.sender;
+
+                displayRank(data);
                 /**
                  * This is for the command builder and a emitter
                  */
@@ -42,15 +45,22 @@ class ServerBuild extends ServerBuilder {
                 };
 
                 Command.getAllRegistation().forEach((element) => {
-                    if (!data.message.startsWith(this.command.prefix) || element.name !== command)
-                        return;
+                    if (!data.message.startsWith(this.command.prefix) || element.name !== command) return;
                     if (element.staff === 'true' && !data.sender.hasTag(configuration.staff_tag)) {
                         if (element?.cancelMessage) data.cancel = true;
                         return data.sender.tellraw(`§¶§c§lUAC ► §c§lThis command is meant for staff only.`);
                     }
+                    /**
+                     * ICM check.
+                     */
+                    if (Database.get('icmtoggle') !== 1 && !sender.hasTag('staffstatus')) {
+                        sender.tellraw(`§¶§cUAC ► §c§lThe Realm Owner currently has Player Commands Disabled`);
+                        data.cancel = true;
+                        return;
+                    }
 
                     /**
-                     * Registration callback
+                     * Registration callback.
                      */
                     if (element?.cancelMessage) data.cancel = true;
                     try {
@@ -60,19 +70,7 @@ class ServerBuild extends ServerBuilder {
                         this.runCommandAsync(`tellraw @a {"rawtext":[{"text":"§¶§c§lUAC JS Error ► §c${error}"}]}`);
                     }
                 })
-            });
-            let oldPlayer = [];
-            world.afterEvents.entitySpawn.subscribe((data) => {
-                if (data.entity.id !== 'minecraft:player') return;
-                let playerSpawned = Player.list().filter((current) => !oldPlayer.some((old) => current === old));
-
-                if (playerSpawned.includes(data.entity.nameTag)) { };
-            });
-            system.runInterval(() => {
-                if (world.getAllPlayers().length > 0) {
-                    worldLoaded = true;
-                };
-            });
+            })
         } catch (error) {
             console.warn(error, error.stack);
         }

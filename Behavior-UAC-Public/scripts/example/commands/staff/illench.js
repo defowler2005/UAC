@@ -1,7 +1,7 @@
 import { Database, Server } from '../../../library/Minecraft.js';
-import { tellrawStaff, TellRB } from '../../../library/utils/prototype.js';
+import { tellrawStaff } from '../../../library/utils/prototype.js';
 import { ItemStack, system, EnchantmentTypes, world } from '@minecraft/server';
-
+import { TellRB } from '../../../library/utils/prototype.js';
 const registerInformation = {
     cancelMessage: true,
     name: 'illench',

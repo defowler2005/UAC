@@ -1,4 +1,3 @@
-import { scoreTest, setScore } from '../library/utils/score_testing.js';
 import { overworld } from '../library/utils/cmd_queue.js';
 import { tellrawServer } from '../library/utils/prototype.js';
 import { Database } from '../library/Minecraft.js';

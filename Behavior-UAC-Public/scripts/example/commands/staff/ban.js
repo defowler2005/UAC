@@ -1,4 +1,5 @@
-import { tellrawServer, TellRB } from '../../../library/utils/prototype.js';
+import { tellrawServer } from '../../../library/utils/prototype.js';
+import { TellRB } from '../../../library/utils/prototype.js';
 import { Server } from '../../../library/Minecraft.js';
 import { world } from '@minecraft/server';
 
